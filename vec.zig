@@ -66,13 +66,11 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
                 return @This(){ .x = x, .y = y, .z = z };
             }
 
-            pub fn cross(self: Self, other: Self) Self {
+            pub fn cross(self: @This(), other: @This()) @This() {
                 return @This(){
-                    .v = .{
-                        self.y * other.z - self.z * other.y,
-                        self.z * other.x - self.x * other.z,
-                        self.x * other.y - self.y * other.x,
-                    },
+                    .x = self.y * other.z - self.z * other.y,
+                    .y = self.z * other.x - self.x * other.z,
+                    .z = self.x * other.y - self.y * other.x,
                 };
             }
 

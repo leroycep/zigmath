@@ -1,7 +1,6 @@
 const std = @import("std");
 const math = std.math;
-const Vec = @import("../util.zig").Vec;
-const Vec3 = @import("../util.zig").Vec3;
+const Vec = @import("math.zig").Vec;
 
 pub fn Mat4(comptime T: type) type {
     const W = 4;
@@ -81,7 +80,7 @@ pub fn Mat4(comptime T: type) type {
             };
         }
 
-        pub fn translation(pos: Vec3(T)) @This() {
+        pub fn translation(pos: Vec(3, T)) @This() {
             return .{
                 .v = .{
                     1,       0,       0,       0,
@@ -106,25 +105,25 @@ pub fn Mat4(comptime T: type) type {
             };
         }
 
-        pub fn lookAt(eye: Vec3(T), target: Vec3(T), up: Vec3(T)) @This() {
-            const f = target.sub(eye).normalize();
+        pub fn lookAt(eye: Vec(3, T), target: Vec(3, T), up: Vec(3, T)) @This() {
+            const f = target.subv(eye).normalize();
             const s = f.cross(up.normalize()).normalize();
             const u = s.cross(f);
 
             var res: @This() = undefined;
 
-            res.at(0, 0).* = s.x();
-            res.at(0, 1).* = s.y();
-            res.at(0, 2).* = s.z();
-            res.at(0, 3).* = -s.dot(eye);
-            res.at(1, 0).* = u.x();
-            res.at(1, 1).* = u.y();
-            res.at(1, 2).* = u.z();
-            res.at(1, 3).* = -u.dot(eye);
-            res.at(2, 0).* = -f.x();
-            res.at(2, 1).* = -f.y();
-            res.at(2, 2).* = -f.z();
-            res.at(2, 3).* = f.dot(eye);
+            res.at(0, 0).* = s.x;
+            res.at(0, 1).* = s.y;
+            res.at(0, 2).* = s.z;
+            res.at(0, 3).* = -s.dotv(eye);
+            res.at(1, 0).* = u.x;
+            res.at(1, 1).* = u.y;
+            res.at(1, 2).* = u.z;
+            res.at(1, 3).* = -u.dotv(eye);
+            res.at(2, 0).* = -f.x;
+            res.at(2, 1).* = -f.y;
+            res.at(2, 2).* = -f.z;
+            res.at(2, 3).* = f.dotv(eye);
             res.at(3, 0).* = 0;
             res.at(3, 1).* = 0;
             res.at(3, 2).* = 0;
