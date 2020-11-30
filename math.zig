@@ -28,3 +28,8 @@ pub fn vec2us(x: usize, y: usize) Vec(2, usize) {
 pub fn vec2is(x: isize, y: isize) Vec(2, isize) {
     return Vec(2, isize).init(x, y);
 }
+
+// Define commmon matrix types
+pub const Mat4 = @import("./matrix.zig").Mat4;
+pub const Mat4f = Mat4(f32);
+
