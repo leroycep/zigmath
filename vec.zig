@@ -23,10 +23,8 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
 
             pub fn rotate(self: @This(), radians: f32) @This() {
                 return .{
-                    .v = [_]T{
-                        self.x * std.math.cos(radians) - self.y * std.math.sin(radians),
-                        self.y * std.math.cos(radians) + self.x * std.math.sin(radians),
-                    },
+                    .x = self.x * std.math.cos(radians) - self.y * std.math.sin(radians),
+                    .y = self.y * std.math.cos(radians) + self.x * std.math.sin(radians),
                 };
             }
 
