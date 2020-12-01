@@ -281,7 +281,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getField(i) = @floor(self.getField(i));
+                res.getFieldMut(i).* = @floor(self.getField(i));
             }
 
             return res;
