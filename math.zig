@@ -33,3 +33,4 @@ pub fn vec2is(x: isize, y: isize) Vec(2, isize) {
 pub const Mat4 = @import("./matrix.zig").Mat4;
 pub const Mat4f = Mat4(f32);
 
+pub const VoxelTraversal = @import("./voxel_traversal.zig").VoxelTraversal;
