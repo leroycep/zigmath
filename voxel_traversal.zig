@@ -8,7 +8,6 @@ pub const VoxelTraversal = struct {
     step: math.Vec(3, i32),
     tMax: Vec3f,
     tDelta: Vec3f,
-    neg_diff: ?math.Vec(3, i32),
     returned_first: bool = false,
     returned_last_voxel: bool = false,
 
@@ -22,25 +21,11 @@ pub const VoxelTraversal = struct {
             .z = if (direction.z >= 0) 1 else -1,
         };
         const next_voxel_boundary = math.Vec3f{
-            .x = @intToFloat(f32, current_voxel.x + step.x),
-            .y = @intToFloat(f32, current_voxel.y + step.y),
-            .z = @intToFloat(f32, current_voxel.z + step.z),
+            .x = if (step.x >= 0) @intToFloat(f32, current_voxel.x + 1) else @intToFloat(f32, current_voxel.x),
+            .y = if (step.y >= 0) @intToFloat(f32, current_voxel.y + 1) else @intToFloat(f32, current_voxel.y),
+            .z = if (step.z >= 0) @intToFloat(f32, current_voxel.z + 1) else @intToFloat(f32, current_voxel.z),
         };
-
-        var diff = math.Vec(3, i32).init(0, 0, 0);
-        var neg_ray = false;
-        if (current_voxel.x != last_voxel.x and direction.x < 0) {
-            diff.x -= 1;
-            neg_ray = true;
-        }
-        if (current_voxel.y != last_voxel.y and direction.y < 0) {
-            diff.y -= 1;
-            neg_ray = true;
-        }
-        if (current_voxel.z != last_voxel.z and direction.z < 0) {
-            diff.z -= 1;
-            neg_ray = true;
-        }
+        std.debug.print("next_voxel_boundary: {}\r", .{next_voxel_boundary});
 
         return @This(){
             .current_voxel = current_voxel,
@@ -56,7 +41,6 @@ pub const VoxelTraversal = struct {
                 .y = if (direction.y != 0) 1.0 / direction.y * @intToFloat(f32, step.y) else std.math.f32_max,
                 .z = if (direction.z != 0) 1.0 / direction.z * @intToFloat(f32, step.z) else std.math.f32_max,
             },
-            .neg_diff = if (neg_ray) diff else null,
         };
     }
 
@@ -64,12 +48,6 @@ pub const VoxelTraversal = struct {
         if (!this.returned_first) {
             this.returned_first = true;
             return this.current_voxel;
-        }
-        if (this.neg_diff) |diff| {
-            const pos = this.current_voxel;
-            this.current_voxel = this.current_voxel.addv(diff);
-            this.neg_diff = null;
-            return pos;
         }
         if (this.last_voxel.eql(this.current_voxel)) {
             if (this.returned_last_voxel) {
@@ -79,22 +57,15 @@ pub const VoxelTraversal = struct {
                 return this.last_voxel;
             }
         }
-        if (this.tMax.x < this.tMax.y) {
-            if (this.tMax.x < this.tMax.z) {
-                this.current_voxel.x += this.step.x;
-                this.tMax.x += this.tDelta.x;
-            } else {
-                this.current_voxel.z += this.step.z;
-                this.tMax.z += this.tDelta.z;
-            }
+        if (this.tMax.x < this.tMax.y and this.tMax.x < this.tMax.z) {
+            this.current_voxel.x += this.step.x;
+            this.tMax.x += this.tDelta.x;
+        } else if (this.tMax.y < this.tMax.z) {
+            this.current_voxel.y += this.step.y;
+            this.tMax.y += this.tDelta.y;
         } else {
-            if (this.tMax.y < this.tMax.z) {
-                this.current_voxel.y += this.step.y;
-                this.tMax.y += this.tDelta.y;
-            } else {
-                this.current_voxel.z += this.step.z;
-                this.tMax.z += this.tDelta.z;
-            }
+            this.current_voxel.z += this.step.z;
+            this.tMax.z += this.tDelta.z;
         }
         return this.current_voxel;
     }
