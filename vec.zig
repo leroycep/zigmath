@@ -191,6 +191,17 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
             return res;
         }
 
+        pub fn scaleDivFloor(self: This, scal: T) This {
+            var res: This = undefined;
+
+            comptime var i = 0;
+            inline while (i < S) : (i += 1) {
+                res.getFieldMut(i).* = @divFloor(self.getField(i), scal);
+            }
+
+            return res;
+        }
+
         pub fn normalize(self: This) This {
             const mag = self.magnitude();
             var res: This = undefined;
