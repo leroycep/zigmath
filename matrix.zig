@@ -145,5 +145,17 @@ pub fn Mat4(comptime T: type) type {
                 self.v[12], self.v[13], self.v[14], self.v[12],
             });
         }
+
+        pub fn floatCast(self: @This(), comptime F: type) Mat4(F) {
+            var res: Mat4(F) = undefined;
+
+            var i: usize = 0;
+            while (i < self.v.len) : (i += 1) {
+                res.v[i] = @floatCast(F, self.v[i]);
+            }
+
+            return res;
+        }
+
     };
 }
