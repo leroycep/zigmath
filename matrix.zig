@@ -83,10 +83,10 @@ pub fn Mat4(comptime T: type) type {
         pub fn translation(pos: Vec(3, T)) @This() {
             return .{
                 .v = .{
-                    1,       0,       0,       0,
-                    0,       1,       0,       0,
-                    0,       0,       1,       0,
-                    pos.x(), pos.y(), pos.z(), 1,
+                    1,     0,     0,     0,
+                    0,     1,     0,     0,
+                    0,     0,     1,     0,
+                    pos.x, pos.y, pos.z, 1,
                 },
             };
         }
@@ -156,6 +156,5 @@ pub fn Mat4(comptime T: type) type {
 
             return res;
         }
-
     };
 }
