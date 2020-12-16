@@ -104,6 +104,46 @@ pub fn Mat4(comptime T: type) type {
                 },
             };
         }
+        /// Returns an orthographic projection with the specified dimensions
+        // pub fn orthographic(left: T, right: T, bottom: T, top: T, near: T, far: T) @This() {
+        //     const widthRatio = 1 / (right - left);
+        //     const heightRatio = 1 / (top - bottom);
+        //     const depthRatio = 1 / (far - near);
+        //     const tx = -(right + left) * widthRatio;
+        //     const ty = -(top + bottom) * heightRatio;
+        //     const tz = -(far + near) * depthRatio;
+        //     return .{
+        //         .v = .{
+        //             2 * widthRatio, 0,               0,               tx,
+        //             0,              2 * heightRatio, 0,               ty,
+        //             0,              0,               -2 * depthRatio, tz,
+        //             0,              0,               0,               1,
+        //         },
+        //     };
+        // }
+        pub fn ortho(width: T, height: T) @This() {
+            return .{
+                .v = .{
+                    2 / width, 0,          0,  0,
+                    0,         2 / height, 0,  0,
+                    0,         0,          -1, 1,
+                    0,         0,          0,  1,
+                },
+            };
+        }
+
+        pub fn orthoScreen(width: T, height: T) @This() {
+            const half_w = @ceil(width / 2);
+            const half_h = @ceil(height / 2);
+            return .{
+                .v = .{
+                    2 / (half_w + half_w), 0,                      0,                                       0,
+                    0,                     2 / (-half_h - half_h), 0,                                       0,
+                    0,                     0,                      (-half_w + half_w) / (-half_w - half_w), (half_h - half_h) / (half_h + half_h),
+                    0,                     0,                      0,                                       1,
+                },
+            };
+        }
 
         pub fn lookAt(eye: Vec(3, T), target: Vec(3, T), up: Vec(3, T)) @This() {
             const f = target.subv(eye).normalize();
