@@ -169,6 +169,17 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
             return res;
         }
 
+        pub fn divv(self: This, other: This) This {
+            var res: This = undefined;
+
+            comptime var i = 0;
+            inline while (i < S) : (i += 1) {
+                res.getFieldMut(i).* = self.getField(i) / other.getField(i);
+            }
+
+            return res;
+        }
+
         pub fn scale(self: This, scal: T) This {
             var res: This = undefined;
 
