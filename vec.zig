@@ -354,11 +354,13 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
         }
 
         pub fn format(self: This, comptime fmt: []const u8, opt: std.fmt.FormatOptions, out: anytype) !void {
-            return switch (S) {
-                2 => std.fmt.format(out, "<{d}, {d}>", .{ self.x, self.y }),
-                3 => std.fmt.format(out, "<{d}, {d}, {d}>", .{ self.x, self.y, self.z }),
-                else => @compileError("Format is unsupported for this vector size"),
-            };
+            comptime var i = 0;
+            try out.writeAll("<");
+            inline while(i < S) : (i += 1) {
+                if (i != 0) try out.writeAll(", ");
+                try std.fmt.formatType(self.getField(i), fmt, opt, out, 10);
+            }
+            try out.writeAll(">");
         }
     };
 }
