@@ -90,6 +90,10 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
             return this.addf(init(int, frac));
         }
 
+        pub fn sub(this: @This(), int: SM, frac: F) @This() {
+            return this.subf(init(int, frac));
+        }
+
         pub fn mul(this: @This(), int: SM, frac: F) @This() {
             return this.mulf(init(int, frac));
         }
@@ -160,6 +164,10 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
             return a.i < b.i;
         }
 
+        pub fn eqf(a: @This(), b: @This()) bool {
+            return a.i == b.i;
+        }
+
         pub fn format(this: @This(), comptime fmt: []const u8, opt: std.fmt.FormatOptions, out: anytype) !void {
             const sm = @intCast(SM, this.i >> fraction);
             if (sm < 0 and this.i & (DENOM - 1) != 0) {
@@ -182,9 +190,48 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
 
                 while (f > 0) {
                     f *= 10;
-                    try out.writeByte('0' + (f >> fraction));
+                    try out.writeByte('0' + @intCast(u8, f >> fraction));
                     f &= (DENOM - 1);
                 }
+            }
+        }
+
+        pub fn parse(str: []const u8, radixOr0: u8) !@This() {
+            var radix = radixOr0;
+            var startIdx: usize = 0;
+            if (radix == 0 and str.len > 2 and str[0] == '0') {
+                // Try to detect radix
+                switch (str[1]) {
+                    'b' => {
+                        startIdx = 2;
+                        radix = 2;
+                    },
+                    'o' => {
+                        startIdx = 2;
+                        radix = 8;
+                    },
+                    'x' => {
+                        startIdx = 2;
+                        radix = 16;
+                    },
+                    else => radix = 10,
+                }
+            } else {
+                radix = 10;
+            }
+            if (std.mem.indexOfScalar(u8, str, '.')) |decimal_point| {
+                const int = try std.fmt.parseInt(SM, str[startIdx..decimal_point], radix);
+                const numerator = try std.fmt.parseInt(A, str[decimal_point + 1 ..], radix);
+                const denom = std.math.pow(A, radix, str[decimal_point + 1 ..].len);
+                return init(int, @intCast(F, @divFloor(numerator * DENOM, denom)));
+            } else {
+                return initInteger(try std.fmt.parseInt(SM, str, radix));
+            }
+        }
+
+        pub fn parseComptime(comptime str: []const u8) @This() {
+            comptime {
+                return parse(str, 0) catch unreachable;
             }
         }
     };
@@ -276,4 +323,15 @@ test "sqrt very large number" {
     const fix = FixPoint(1, 60, 4).init;
 
     expectApprox(fix(0, 1), fix(750_000_000, 0), fix(750_000_000 * 750_000_000, 0).sqrt());
+}
+
+test "parse from string" {
+    const F = FixPoint(1, 50, 14);
+
+    expectApprox(F.init(0, 1), F.init(1, 4096), try F.parse("1.25", 10));
+    expectApprox(F.init(0, 1), F.init(3, 2318), try F.parse("3.1415", 10));
+    expectApprox(F.init(0, 1), F.init(2, 11768), try F.parse("2.7182818284", 10));
+    expectApprox(F.init(0, 1), F.init(1, 4096), F.parseComptime("1.25"));
+    expectApprox(F.init(0, 1), F.init(16, 2368), F.parseComptime("0x10.25"));
+    expectApprox(F.init(0, 1), F.init(1, 1), F.parseComptime("0b1.00000000000001"));
 }
