@@ -3,9 +3,9 @@ const math = std.math;
 
 pub fn Vec(comptime S: usize, comptime T: type) type {
     return switch (S) {
-        2 => extern struct {
-            x: T = 0,
-            y: T = 0,
+        2 => struct {
+            x: T,
+            y: T,
 
             pub usingnamespace VecCommonFns(S, T, @This());
 
@@ -48,6 +48,10 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
                 return self.mulv(init(x, y));
             }
 
+            pub fn div(self: @This(), x: T, y: T) @This() {
+                return self.divv(init(x, y));
+            }
+
             pub fn replace(self: @This(), xo: ?T, yo: ?T) @This() {
                 return @This(){
                     .x = if (xo) |x| x else self.x,
@@ -55,10 +59,10 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
                 };
             }
         },
-        3 => extern struct {
-            x: T = 0,
-            y: T = 0,
-            z: T = 0,
+        3 => struct {
+            x: T,
+            y: T,
+            z: T,
 
             pub usingnamespace VecCommonFns(S, T, @This());
 
@@ -85,12 +89,16 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
             pub fn mul(self: @This(), x: T, y: T, z: T) @This() {
                 return self.mulv(init(x, y, z));
             }
+
+            pub fn div(self: @This(), x: T, y: T, z: T) @This() {
+                return self.divv(init(x, y, z));
+            }
         },
-        4 => extern struct {
-            x: T = 0,
-            y: T = 0,
-            z: T = 0,
-            w: T = 0,
+        4 => struct {
+            x: T,
+            y: T,
+            z: T,
+            w: T,
 
             pub usingnamespace VecCommonFns(S, T, @This());
 
@@ -109,13 +117,49 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
             pub fn mul(self: @This(), x: T, y: T, z: T, w: T) @This() {
                 return self.mulv(init(x, y, z, w));
             }
+
+            pub fn div(self: @This(), x: T, y: T, z: T, w: T) @This() {
+                return self.divv(init(x, y, z, w));
+            }
         },
         else => @compileError("Vec of size " ++ S ++ " is not supported"),
     };
 }
 
 fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
+    const primitive_ops = struct {
+        pub fn add(a: T, b: T) T {
+            return a + b;
+        }
+
+        pub fn sub(a: T, b: T) T {
+            return a - b;
+        }
+
+        pub fn mul(a: T, b: T) T {
+            return a * b;
+        }
+
+        pub fn div(a: T, b: T) T {
+            return a / b;
+        }
+
+        pub const sqrt = std.math.sqrt;
+    };
+
+    // Allow structs/unions/enums to override arithmetic operations
+    const is_primitive = switch (@typeInfo(T)) {
+        .Int, .Float => true,
+        else => false,
+    };
     return struct {
+        const comp_add = if (is_primitive) primitive_ops.add else T.@"+";
+        const comp_sub = if (is_primitive) primitive_ops.sub else T.@"-";
+        const comp_mul = if (is_primitive) primitive_ops.mul else T.@"*";
+        const comp_div = if (is_primitive) primitive_ops.div else T.@"/";
+        const comp_sqrt = if (is_primitive) primitive_ops.sqrt else T.@"sqrt";
+        const ZERO = if (is_primitive) 0 else T.@"ZERO";
+
         pub fn getField(this: This, comptime index: comptime_int) T {
             return switch (index) {
                 0 => this.x,
@@ -141,7 +185,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getFieldMut(i).* = self.getField(i) - other.getField(i);
+                res.getFieldMut(i).* = comp_sub(self.getField(i), other.getField(i));
             }
 
             return res;
@@ -152,7 +196,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getFieldMut(i).* = self.getField(i) + other.getField(i);
+                res.getFieldMut(i).* = comp_add(self.getField(i), other.getField(i));
             }
 
             return res;
@@ -163,7 +207,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getFieldMut(i).* = self.getField(i) * other.getField(i);
+                res.getFieldMut(i).* = comp_mul(self.getField(i), other.getField(i));
             }
 
             return res;
@@ -174,7 +218,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getFieldMut(i).* = self.getField(i) / other.getField(i);
+                res.getFieldMut(i).* = comp_div(self.getField(i), other.getField(i));
             }
 
             return res;
@@ -185,7 +229,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getFieldMut(i).* = self.getField(i) * scal;
+                res.getFieldMut(i).* = comp_mul(self.getField(i), scal);
             }
 
             return res;
@@ -196,7 +240,7 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
 
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                res.getFieldMut(i).* = self.getField(i) / scal;
+                res.getFieldMut(i).* = comp_div(self.getField(i), scal);
             }
 
             return res;
@@ -259,16 +303,16 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
         }
 
         pub fn magnitudeSq(self: This) T {
-            var sum: T = 0;
+            var sum: T = ZERO;
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                sum += self.getField(i) * self.getField(i);
+                sum = comp_add(sum, comp_mul(self.getField(i), self.getField(i)));
             }
             return sum;
         }
 
         pub fn magnitude(self: This) T {
-            return std.math.sqrt(self.magnitudeSq());
+            return comp_sqrt(self.magnitudeSq());
         }
 
         pub fn distanceSq(self: This, other: This) T {
@@ -280,10 +324,10 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
         }
 
         pub fn dotv(self: This, other: This) T {
-            var sum: T = 0;
+            var sum: T = ZERO;
             comptime var i = 0;
             inline while (i < S) : (i += 1) {
-                sum += self.getField(i) * other.getField(i);
+                sum = comp_add(sum, comp_mul(self.getField(i), other.getField(i)));
             }
             return sum;
         }
@@ -356,11 +400,33 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
         pub fn format(self: This, comptime fmt: []const u8, opt: std.fmt.FormatOptions, out: anytype) !void {
             comptime var i = 0;
             try out.writeAll("<");
-            inline while(i < S) : (i += 1) {
+            inline while (i < S) : (i += 1) {
                 if (i != 0) try out.writeAll(", ");
                 try std.fmt.formatType(self.getField(i), fmt, opt, out, 10);
             }
             try out.writeAll(">");
         }
     };
+}
+
+test "fixed point vectors" {
+    const FixPoint = @import("./fixpoint.zig").FixPoint;
+    const F = FixPoint(1, 60, 4);
+    const V = Vec(2, F);
+
+    // shortcuts
+    const f = F.init;
+    const v = V.init;
+
+    std.testing.expectEqual(v(f(2, 3), f(5, 0)), v(f(1, 1), f(3, 0)).add(f(1, 2), f(2, 0)));
+    std.testing.expectEqual(v(f(3, 0), f(6, 0)), v(f(1, 8), f(3, 0)).scale(f(2, 0)));
+    std.testing.expectEqual(v(f(1, 8), f(3, 0)), v(f(3, 0), f(6, 0)).scaleDiv(f(2, 0)));
+    std.testing.expectEqual(v(f(12, 0), f(6, 0)), v(f(1, 8), f(3, 0)).mul(f(8, 0), f(2, 0)));
+    std.testing.expectEqual(v(f(1, 8), f(3, 0)), v(f(12, 0), f(6, 0)).div(f(8, 0), f(2, 0)));
+    std.testing.expectEqual(f(1831, 6), v(f(42, 0), f(42, 0)).distance(v(f(1337, 0), f(1337, 0))));
+    std.testing.expectEqual(f(66, 0), v(f(-6, 0), f(8, 0)).dotv(v(f(5, 0), f(12, 0))));
+
+    const str = try std.fmt.allocPrint(std.testing.allocator, "{}", .{v(f(1, 0), f(2, 0))});
+    defer std.testing.allocator.free(str);
+    std.testing.expectEqualSlices(u8, "<1., 2.>", str);
 }
