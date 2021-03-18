@@ -55,6 +55,13 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
         },
     });
 
+    const FParse = @Type(.{
+        .Int = .{
+            .signedness = .unsigned,
+            .bits = fraction * 4,
+        },
+    });
+
     const DENOM = (1 << fraction);
 
     return struct {
@@ -197,21 +204,33 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
         }
 
         pub fn parse(str: []const u8, radixOr0: u8) !@This() {
-            var radix = radixOr0;
+            // Detect sign
             var startIdx: usize = 0;
-            if (radix == 0 and str.len > 2 and str[0] == '0') {
-                // Try to detect radix
-                switch (str[1]) {
+            var is_neg = false;
+            if (str.len == 0) return error.InvalidCharacter;
+            if (str[0] == '+') {
+                startIdx += 1;
+                is_neg = false;
+            }
+            if (str[0] == '-') {
+                startIdx += 1;
+                is_neg = true;
+            }
+
+            // Detect radix
+            var radix = radixOr0;
+            if (radix == 0 and (str.len - startIdx) > 2 and str[startIdx] == '0') {
+                switch (str[startIdx + 1]) {
                     'b' => {
-                        startIdx = 2;
+                        startIdx += 2;
                         radix = 2;
                     },
                     'o' => {
-                        startIdx = 2;
+                        startIdx += 2;
                         radix = 8;
                     },
                     'x' => {
-                        startIdx = 2;
+                        startIdx += 2;
                         radix = 16;
                     },
                     else => radix = 10,
@@ -220,12 +239,28 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
                 radix = 10;
             }
             if (std.mem.indexOfScalar(u8, str, '.')) |decimal_point| {
-                const int = try std.fmt.parseInt(SM, str[startIdx..decimal_point], radix);
-                const numerator = try std.fmt.parseInt(A, str[decimal_point + 1 ..], radix);
-                const denom = std.math.pow(A, radix, str[decimal_point + 1 ..].len);
-                return init(int, @intCast(F, @divFloor(numerator * DENOM, denom)));
+                const int = try std.fmt.parseUnsigned(SM, str[startIdx..decimal_point], radix);
+
+                var numerator: FParse = 0;
+                var denom: FParse = 1;
+                for (str[decimal_point + 1 ..]) |c| {
+                    const digit = try std.fmt.charToDigit(c, radix);
+
+                    if (numerator != 0) {
+                        numerator = try std.math.mul(FParse, numerator, try std.math.cast(FParse, radix));
+                    }
+                    numerator = try std.math.add(FParse, numerator, try std.math.cast(FParse, digit));
+                    denom = try std.math.mul(FParse, denom, try std.math.cast(FParse, radix));
+                }
+
+                const fixpoint = init(int, @intCast(F, @divFloor(numerator * DENOM, denom)));
+                if (is_neg) {
+                    return fixpoint.neg();
+                } else {
+                    return fixpoint;
+                }
             } else {
-                return initInteger(try std.fmt.parseInt(SM, str, radix));
+                return initInteger(try std.fmt.parseInt(SM, str[startIdx..], radix));
             }
         }
 
@@ -328,10 +363,16 @@ test "sqrt very large number" {
 test "parse from string" {
     const F = FixPoint(1, 50, 14);
 
+    expectApprox(F.init(0, 1), F.init(1, 0), try F.parse("1", 10));
     expectApprox(F.init(0, 1), F.init(1, 4096), try F.parse("1.25", 10));
+    expectApprox(F.init(0, 1), F.init(-1, 4096), try F.parse("-1.25", 10));
     expectApprox(F.init(0, 1), F.init(3, 2318), try F.parse("3.1415", 10));
     expectApprox(F.init(0, 1), F.init(2, 11768), try F.parse("2.7182818284", 10));
     expectApprox(F.init(0, 1), F.init(1, 4096), F.parseComptime("1.25"));
     expectApprox(F.init(0, 1), F.init(16, 2368), F.parseComptime("0x10.25"));
+    expectApprox(F.init(0, 1), F.init(-16, 2368), F.parseComptime("-0x10.25"));
     expectApprox(F.init(0, 1), F.init(1, 1), F.parseComptime("0b1.00000000000001"));
+
+    std.testing.expectError(error.InvalidCharacter, F.parse("0x-10.25", 0));
+    std.testing.expectError(error.InvalidCharacter, F.parse("10.-25", 0));
 }
