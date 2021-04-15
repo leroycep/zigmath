@@ -169,9 +169,9 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
             return switch (index) {
                 0 => this.x,
                 1 => this.y,
-                2 => if (@hasField(@This(), "z")) this.z else std.debug.panic("index out of bounds!", .{}),
-                3 => if (@hasField(@This(), "w")) this.w else std.debug.panic("index out of bounds!", .{}),
-                else => std.debug.panic("index out of bounds!", .{}),
+                2 => if (@hasField(@This(), "z")) this.z else @panic("index out of bounds!"),
+                3 => if (@hasField(@This(), "w")) this.w else @panic("index out of bounds!"),
+                else => @panic("index out of bounds!"),
             };
         }
 
@@ -179,9 +179,9 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
             return switch (index) {
                 0 => &this.x,
                 1 => &this.y,
-                2 => if (@hasField(@This(), "z")) &this.z else std.debug.panic("index out of bounds!", .{}),
-                3 => if (@hasField(@This(), "w")) &this.w else std.debug.panic("index out of bounds!", .{}),
-                else => std.debug.panic("index out of bounds!", .{}),
+                2 => if (@hasField(@This(), "z")) &this.z else @panic("index out of bounds!"),
+                3 => if (@hasField(@This(), "w")) &this.w else @panic("index out of bounds!"),
+                else => @panic("index out of bounds!"),
             };
         }
 
