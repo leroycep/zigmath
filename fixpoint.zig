@@ -20,7 +20,7 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
     // Integer for sqrt
     const ISQRT = @Type(.{
         .Int = .{
-            .signedness = if (signed == 1) .signed else .unsigned,
+            .signedness = .unsigned,
             .bits = magnitude + fraction + fraction,
         },
     });
@@ -128,11 +128,11 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
                 x = DENOM;
             }
 
-            const v = @intCast(A, this.i) << (fraction - 1);
+            const v = @intCast(ISQRT, this.i) << (fraction - 1);
 
-            var iters = std.math.log2(this.i);
+            var iters = std.math.log2(@intCast(ISQRT, this.i));
             var prev: ISQRT = 0;
-            while (prev - x > 2 or prev - x < -2) {
+            while (prev > 2 + x or prev < x - 2) {
                 prev = x;
                 x = (x >> 1) + @divFloor(v, x);
             }

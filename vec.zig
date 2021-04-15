@@ -157,26 +157,31 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
         const comp_sub = if (is_primitive) primitive_ops.sub else T.@"-";
         const comp_mul = if (is_primitive) primitive_ops.mul else T.@"*";
         const comp_div = if (is_primitive) primitive_ops.div else T.@"/";
-        const comp_sqrt = if (is_primitive) primitive_ops.sqrt else T.@"sqrt";
         const ZERO = if (is_primitive) 0 else T.@"ZERO";
 
-        pub fn getField(this: This, comptime index: comptime_int) T {
+        const comp_sqrt = switch (@typeInfo(T)) {
+            .Int => @compileError("Where is this?"),
+            .Float => primitive_ops.sqrt,
+            else => T.@"sqrt",
+        };
+
+        pub fn getField(this: This, index: usize) T {
             return switch (index) {
                 0 => this.x,
                 1 => this.y,
-                2 => this.z,
-                3 => this.w,
-                else => @compileError("index out of bounds!"),
+                2 => if (@hasField(@This(), "z")) this.z else std.debug.panic("index out of bounds!", .{}),
+                3 => if (@hasField(@This(), "w")) this.w else std.debug.panic("index out of bounds!", .{}),
+                else => std.debug.panic("index out of bounds!", .{}),
             };
         }
 
-        pub fn getFieldMut(this: *This, comptime index: comptime_int) *T {
+        pub fn getFieldMut(this: *This, index: usize) *T {
             return switch (index) {
                 0 => &this.x,
                 1 => &this.y,
-                2 => &this.z,
-                3 => &this.w,
-                else => @compileError("index out of bounds!"),
+                2 => if (@hasField(@This(), "z")) &this.z else std.debug.panic("index out of bounds!", .{}),
+                3 => if (@hasField(@This(), "w")) &this.w else std.debug.panic("index out of bounds!", .{}),
+                else => std.debug.panic("index out of bounds!", .{}),
             };
         }
 
