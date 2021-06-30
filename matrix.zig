@@ -174,7 +174,7 @@ pub fn Mat4(comptime T: type) type {
             return res;
         }
 
-        pub fn format(self: @This(), comptime fmt: []const u8, opt: std.fmt.FormatOptions, out: anytype) !void {
+        pub fn format(self: @This(), comptime _: []const u8, _: std.fmt.FormatOptions, out: anytype) !void {
             return std.fmt.format(out,
                 \\ {}, {}, {}, {}
                 \\ {}, {}, {}, {}

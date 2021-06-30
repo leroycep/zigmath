@@ -130,7 +130,6 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
 
             const v = @intCast(ISQRT, this.i) << (fraction - 1);
 
-            var iters = std.math.log2(@intCast(ISQRT, this.i));
             var prev: ISQRT = 0;
             while (prev > 2 + x or prev < x - 2) {
                 prev = x;
@@ -277,25 +276,25 @@ test "Addition of 1:4:4" {
 
     const a = Fix.init(-4, 3);
     const b = a.add(2, 5);
-    std.testing.expectEqual(Fix.init(-1, 14), b);
+    try std.testing.expectEqual(Fix.init(-1, 14), b);
 }
 
 test "Multiplcation of 1:4:4" {
     const fix = FixPoint(1, 4, 4).init;
 
-    std.testing.expectEqual(fix(4, 6), fix(2, 3).mul(2, 0));
-    std.testing.expectEqual(fix(6, 9), fix(2, 3).mul(3, 0));
-    std.testing.expectEqual(fix(-2, 0), fix(-1, 0).mul(2, 0));
-    std.testing.expectEqual(fix(-2, 3), fix(2, 3).mul(-1, 0));
+    try std.testing.expectEqual(fix(4, 6), fix(2, 3).mul(2, 0));
+    try std.testing.expectEqual(fix(6, 9), fix(2, 3).mul(3, 0));
+    try std.testing.expectEqual(fix(-2, 0), fix(-1, 0).mul(2, 0));
+    try std.testing.expectEqual(fix(-2, 3), fix(2, 3).mul(-1, 0));
 }
 
 test "Division of 1:4:4" {
     const fix = FixPoint(1, 4, 4).init;
 
-    std.testing.expectEqual(fix(2, 3), fix(4, 6).div(2, 0));
-    std.testing.expectEqual(fix(2, 3), fix(6, 9).div(3, 0));
-    std.testing.expectEqual(fix(-1, 0), fix(-2, 0).div(2, 0));
-    std.testing.expectEqual(fix(-2, 3), fix(2, 3).div(-1, 0));
+    try std.testing.expectEqual(fix(2, 3), fix(4, 6).div(2, 0));
+    try std.testing.expectEqual(fix(2, 3), fix(6, 9).div(3, 0));
+    try std.testing.expectEqual(fix(-1, 0), fix(-2, 0).div(2, 0));
+    try std.testing.expectEqual(fix(-2, 3), fix(2, 3).div(-1, 0));
 }
 
 test "Format 1:4:4" {
@@ -317,62 +316,63 @@ test "Format 1:4:4" {
     for (test_cases) |case| {
         const str = try std.fmt.allocPrint(std.testing.allocator, "{}", .{case.input});
         defer std.testing.allocator.free(str);
-        std.testing.expectEqualSlices(u8, case.expected, str);
+        try std.testing.expectEqualSlices(u8, case.expected, str);
     }
 }
 
 test "Init" {
     const fix = FixPoint(1, 4, 4).init;
 
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b00010000)), fix(1, 0).i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11111110)), fix(0, 2).neg().i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11111111)), fix(0, 1).neg().i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11110000)), fix(-1, 0).i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11101111)), fix(-1, 1).i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11100000)), fix(-2, 0).i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b00100000)), fix(2, 0).i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11011000)), fix(-2, 8).i);
-    std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11101000)), fix(-1, 8).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b00010000)), fix(1, 0).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11111110)), fix(0, 2).neg().i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11111111)), fix(0, 1).neg().i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11110000)), fix(-1, 0).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11101111)), fix(-1, 1).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11100000)), fix(-2, 0).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b00100000)), fix(2, 0).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11011000)), fix(-2, 8).i);
+    try std.testing.expectEqual(@bitCast(i8, @as(u8, 0b11101000)), fix(-1, 8).i);
 }
 
-fn expectApprox(maxErr: anytype, expected: @TypeOf(maxErr), got: @TypeOf(maxErr)) void {
+fn expectApprox(maxErr: anytype, expected: @TypeOf(maxErr), got: @TypeOf(maxErr)) !void {
     const rel_err = expected.subf(got).divf(expected);
     if (rel_err.gtf(maxErr) or rel_err.ltf(maxErr.neg())) {
-        std.debug.panic("expected approx {} (+/-{} rel), found {}", .{ expected, maxErr, got });
+        std.log.err("expected approx {} (+/-{} rel), found {}", .{ expected, maxErr, got });
+        return error.NotApproxEqual;
     }
 }
 
 test "sqrt" {
     const fix = FixPoint(1, 17, 4).init;
 
-    expectApprox(fix(0, 1), fix(2, 0), fix(4, 0).sqrt());
-    expectApprox(fix(0, 1), fix(3, 0), fix(9, 0).sqrt());
-    expectApprox(fix(0, 1), fix(4, 0), fix(16, 0).sqrt());
-    expectApprox(fix(0, 1), fix(5, 0), fix(25, 0).sqrt());
-    expectApprox(fix(0, 1), fix(6, 0), fix(36, 0).sqrt());
-    expectApprox(fix(0, 1), fix(7, 0), fix(49, 0).sqrt());
-    expectApprox(fix(0, 1), fix(255, 0), fix(65025, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(2, 0), fix(4, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(3, 0), fix(9, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(4, 0), fix(16, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(5, 0), fix(25, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(6, 0), fix(36, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(7, 0), fix(49, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(255, 0), fix(65025, 0).sqrt());
 }
 
 test "sqrt very large number" {
     const fix = FixPoint(1, 60, 4).init;
 
-    expectApprox(fix(0, 1), fix(750_000_000, 0), fix(750_000_000 * 750_000_000, 0).sqrt());
+    try expectApprox(fix(0, 1), fix(750_000_000, 0), fix(750_000_000 * 750_000_000, 0).sqrt());
 }
 
 test "parse from string" {
     const F = FixPoint(1, 50, 14);
 
-    expectApprox(F.init(0, 1), F.init(1, 0), try F.parse("1", 10));
-    expectApprox(F.init(0, 1), F.init(1, 4096), try F.parse("1.25", 10));
-    expectApprox(F.init(0, 1), F.init(-1, 4096), try F.parse("-1.25", 10));
-    expectApprox(F.init(0, 1), F.init(3, 2318), try F.parse("3.1415", 10));
-    expectApprox(F.init(0, 1), F.init(2, 11768), try F.parse("2.7182818284", 10));
-    expectApprox(F.init(0, 1), F.init(1, 4096), F.parseComptime("1.25"));
-    expectApprox(F.init(0, 1), F.init(16, 2368), F.parseComptime("0x10.25"));
-    expectApprox(F.init(0, 1), F.init(-16, 2368), F.parseComptime("-0x10.25"));
-    expectApprox(F.init(0, 1), F.init(1, 1), F.parseComptime("0b1.00000000000001"));
+    try expectApprox(F.init(0, 1), F.init(1, 0), try F.parse("1", 10));
+    try expectApprox(F.init(0, 1), F.init(1, 4096), try F.parse("1.25", 10));
+    try expectApprox(F.init(0, 1), F.init(-1, 4096), try F.parse("-1.25", 10));
+    try expectApprox(F.init(0, 1), F.init(3, 2318), try F.parse("3.1415", 10));
+    try expectApprox(F.init(0, 1), F.init(2, 11768), try F.parse("2.7182818284", 10));
+    try expectApprox(F.init(0, 1), F.init(1, 4096), F.parseComptime("1.25"));
+    try expectApprox(F.init(0, 1), F.init(16, 2368), F.parseComptime("0x10.25"));
+    try expectApprox(F.init(0, 1), F.init(-16, 2368), F.parseComptime("-0x10.25"));
+    try expectApprox(F.init(0, 1), F.init(1, 1), F.parseComptime("0b1.00000000000001"));
 
-    std.testing.expectError(error.InvalidCharacter, F.parse("0x-10.25", 0));
-    std.testing.expectError(error.InvalidCharacter, F.parse("10.-25", 0));
+    try std.testing.expectError(error.InvalidCharacter, F.parse("0x-10.25", 0));
+    try std.testing.expectError(error.InvalidCharacter, F.parse("10.-25", 0));
 }

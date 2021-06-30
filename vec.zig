@@ -103,7 +103,7 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
             pub usingnamespace VecCommonFns(S, T, @This());
 
             pub fn init(xv: T, yv: T, zv: T, wv: T) @This() {
-                return @This(){ .v = .{ .x = x, .y = y, .z = z, .w = w } };
+                return @This(){ .v = .{ .x = xv, .y = yv, .z = zv, .w = wv } };
             }
 
             pub fn sub(self: @This(), x: T, y: T, z: T, w: T) @This() {
@@ -423,15 +423,15 @@ test "fixed point vectors" {
     const f = F.init;
     const v = V.init;
 
-    std.testing.expectEqual(v(f(2, 3), f(5, 0)), v(f(1, 1), f(3, 0)).add(f(1, 2), f(2, 0)));
-    std.testing.expectEqual(v(f(3, 0), f(6, 0)), v(f(1, 8), f(3, 0)).scale(f(2, 0)));
-    std.testing.expectEqual(v(f(1, 8), f(3, 0)), v(f(3, 0), f(6, 0)).scaleDiv(f(2, 0)));
-    std.testing.expectEqual(v(f(12, 0), f(6, 0)), v(f(1, 8), f(3, 0)).mul(f(8, 0), f(2, 0)));
-    std.testing.expectEqual(v(f(1, 8), f(3, 0)), v(f(12, 0), f(6, 0)).div(f(8, 0), f(2, 0)));
-    std.testing.expectEqual(f(1831, 6), v(f(42, 0), f(42, 0)).distance(v(f(1337, 0), f(1337, 0))));
-    std.testing.expectEqual(f(66, 0), v(f(-6, 0), f(8, 0)).dotv(v(f(5, 0), f(12, 0))));
+    try std.testing.expectEqual(v(f(2, 3), f(5, 0)), v(f(1, 1), f(3, 0)).add(f(1, 2), f(2, 0)));
+    try std.testing.expectEqual(v(f(3, 0), f(6, 0)), v(f(1, 8), f(3, 0)).scale(f(2, 0)));
+    try std.testing.expectEqual(v(f(1, 8), f(3, 0)), v(f(3, 0), f(6, 0)).scaleDiv(f(2, 0)));
+    try std.testing.expectEqual(v(f(12, 0), f(6, 0)), v(f(1, 8), f(3, 0)).mul(f(8, 0), f(2, 0)));
+    try std.testing.expectEqual(v(f(1, 8), f(3, 0)), v(f(12, 0), f(6, 0)).div(f(8, 0), f(2, 0)));
+    try std.testing.expectEqual(f(1831, 6), v(f(42, 0), f(42, 0)).distance(v(f(1337, 0), f(1337, 0))));
+    try std.testing.expectEqual(f(66, 0), v(f(-6, 0), f(8, 0)).dotv(v(f(5, 0), f(12, 0))));
 
     const str = try std.fmt.allocPrint(std.testing.allocator, "{}", .{v(f(1, 0), f(2, 0))});
     defer std.testing.allocator.free(str);
-    std.testing.expectEqualSlices(u8, "<1., 2.>", str);
+    try std.testing.expectEqualSlices(u8, "<1., 2.>", str);
 }
