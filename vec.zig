@@ -28,12 +28,12 @@ pub fn Vec(comptime S: usize, comptime T: type) type {
                 };
             }
 
-            pub fn angleToVec(radians: f32, length: f32) Vec2 {
+            pub fn angleToVec(radians: T, length: T) @This() {
                 return .{ .x = math.cos(radians) * length, .y = math.sin(radians) * length };
             }
 
-            pub fn angleBetween(self: Vec2, to: Vec2) f32 {
-                return math.atan2(f32, to.y - self.y, to.x - self.x);
+            pub fn angleBetween(self: @This(), to: @This()) T {
+                return math.atan2(T, to.y - self.y, to.x - self.x);
             }
 
             pub fn sub(self: @This(), x: T, y: T) @This() {
