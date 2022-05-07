@@ -92,7 +92,7 @@ pub fn Mat4(comptime T: type) type {
         }
 
         pub fn perspective(fovRadians: T, aspect: T, near: T, far: T) @This() {
-            const f = math.tan(math.pi * 0.5 - 0.5 * fovRadians);
+            const f = @tan(math.pi * 0.5 - 0.5 * fovRadians);
             const rangeInv = 1.0 / (near - far);
 
             return .{
