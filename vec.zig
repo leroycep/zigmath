@@ -169,8 +169,8 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
             return switch (index) {
                 0 => this.x,
                 1 => this.y,
-                2 => if (@hasField(@This(), "z")) this.z else @panic("index out of bounds!"),
-                3 => if (@hasField(@This(), "w")) this.w else @panic("index out of bounds!"),
+                2 => if (@hasField(This, "z")) this.z else @panic("index out of bounds!"),
+                3 => if (@hasField(This, "w")) this.w else @panic("index out of bounds!"),
                 else => @panic("index out of bounds!"),
             };
         }
@@ -179,8 +179,8 @@ fn VecCommonFns(comptime S: usize, comptime T: type, comptime This: type) type {
             return switch (index) {
                 0 => &this.x,
                 1 => &this.y,
-                2 => if (@hasField(@This(), "z")) &this.z else @panic("index out of bounds!"),
-                3 => if (@hasField(@This(), "w")) &this.w else @panic("index out of bounds!"),
+                2 => if (@hasField(This, "z")) &this.z else @panic("index out of bounds!"),
+                3 => if (@hasField(This, "w")) &this.w else @panic("index out of bounds!"),
                 else => @panic("index out of bounds!"),
             };
         }
@@ -434,4 +434,12 @@ test "fixed point vectors" {
     const str = try std.fmt.allocPrint(std.testing.allocator, "{}", .{v(f(1, 0), f(2, 0))});
     defer std.testing.allocator.free(str);
     try std.testing.expectEqualSlices(u8, "<1., 2.>", str);
+}
+
+
+test "vec3" {
+    const v1 = Vec(3, i32).init(1,1,1);
+    const v2 = Vec(3, i32).init(2,2,2);
+    const v3 = v1.addv(v2);
+    try std.testing.expectEqual(Vec(3, i32).init(3,3,3), v3);
 }
