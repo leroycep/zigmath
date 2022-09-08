@@ -116,7 +116,7 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
 
         pub fn sqrt(this: @This()) @This() {
             std.debug.assert(this.i > 0);
-            const bitpos = @intCast(i16, fraction) - @intCast(i16, @clz(I, this.i));
+            const bitpos = @intCast(i16, fraction) - @intCast(i16, @clz(this.i));
 
             var x: ISQRT = undefined;
             if (bitpos > 0) {
@@ -246,10 +246,10 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
                     const digit = try std.fmt.charToDigit(c, radix);
 
                     if (numerator != 0) {
-                        numerator = try std.math.mul(FParse, numerator, try std.math.cast(FParse, radix));
+                        numerator = try std.math.mul(FParse, numerator, std.math.cast(FParse, radix) orelse return error.Overflow);
                     }
-                    numerator = try std.math.add(FParse, numerator, try std.math.cast(FParse, digit));
-                    denom = try std.math.mul(FParse, denom, try std.math.cast(FParse, radix));
+                    numerator = try std.math.add(FParse, numerator, std.math.cast(FParse, digit) orelse return error.Overflow);
+                    denom = try std.math.mul(FParse, denom, std.math.cast(FParse, radix) orelse return error.Overflow);
                 }
 
                 const fixpoint = init(int, @intCast(F, @divFloor(numerator * DENOM, denom)));

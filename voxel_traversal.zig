@@ -1,7 +1,7 @@
 const std = @import("std");
 const math = @import("./math.zig");
 
-pub fn VoxelTraversal(comptime F: type, I: type) type {
+pub fn VoxelTraversal(comptime F: type, comptime I: type) type {
     const F_max = switch (F) {
         f32 => std.math.f32_max,
         f64 => std.math.f64_max,
