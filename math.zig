@@ -37,6 +37,6 @@ pub const VoxelTraversal = @import("./voxel_traversal.zig").VoxelTraversal;
 
 pub const FixPoint = @import("./fixpoint.zig").FixPoint;
 
-test "" {
+test {
     @import("std").testing.refAllDecls(@This());
 }

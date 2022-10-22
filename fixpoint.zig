@@ -116,7 +116,7 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
 
         pub fn sqrt(this: @This()) @This() {
             std.debug.assert(this.i > 0);
-            const bitpos = @intCast(i16, fraction) - @intCast(i16, @clz(I, this.i));
+            const bitpos = @intCast(i16, fraction) - @intCast(i16, @clz(this.i));
 
             var x: ISQRT = undefined;
             if (bitpos > 0) {
