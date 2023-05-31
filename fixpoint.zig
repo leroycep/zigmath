@@ -72,11 +72,11 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
         pub fn init(int: SM, frac: F) @This() {
             // Invert the fractional bits for two's complement
             if (int < 0) {
-                var new_frac: F = undefined;
-                if (@subWithOverflow(F, frac, 1, &new_frac)) {
+                var new_frac: F = @subWithOverflow(frac, 1);
+                if (new_frac[1]) {
                     return .{ .i = (@intCast(I, int) << fraction) };
                 } else {
-                    return .{ .i = (@intCast(I, int - 1) << fraction) | @intCast(I, (~new_frac)) };
+                    return .{ .i = (@intCast(I, int - 1) << fraction) | @intCast(I, (~new_frac[0])) };
                 }
             } else {
                 return .{ .i = (@intCast(I, int) << fraction) | @intCast(I, frac) };
