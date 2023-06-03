@@ -262,9 +262,7 @@ pub fn FixPoint(comptime signed: u1, comptime magnitude: u16, comptime fraction:
         }
 
         pub fn parseComptime(comptime str: []const u8) @This() {
-            comptime {
-                return parse(str, 0) catch unreachable;
-            }
+            return comptime parse(str, 0) catch unreachable;
         }
     };
 }
